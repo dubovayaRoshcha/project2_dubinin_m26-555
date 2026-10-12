@@ -2,6 +2,7 @@ import shlex
 
 
 def parse_value(value):
+    """Преобразует строковое значение в тип str, int или bool"""
     if value.startswith('"') and value.endswith('"'):
         return value[1:-1]
 
@@ -18,6 +19,7 @@ def parse_value(value):
 
 
 def parse_list(text):
+    """Разбирает список значений, разделённых запятыми"""
     text = text.strip()
 
     if not text.startswith("(") or not text.endswith(")"):
@@ -52,6 +54,7 @@ def parse_list(text):
 
 
 def parse_condition(text):
+    """Преобразует условие вида name = value в словарь"""
     parts = text.split("=", 1)
 
     if len(parts) != 2:

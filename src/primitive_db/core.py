@@ -1,9 +1,11 @@
+from primitive_db.constants import VALID_TYPES
 from primitive_db.decorators import confirm_action, handle_db_errors, log_time
 from primitive_db.utils import load_table_data
 
 
 @handle_db_errors
 def create_table(metadata, table_name, columns):
+    """Создаёт таблицу и добавляет её в метаданные"""
     if table_name in metadata:
         raise ValueError(f'Таблица "{table_name}" уже существует.')
 
@@ -17,7 +19,7 @@ def create_table(metadata, table_name, columns):
 
         name, data_type = parts
 
-        if data_type not in ("int", "str", "bool"):
+        if data_type not in VALID_TYPES:
             raise ValueError(f"Некорректное значение: {data_type}")
 
         if not name or name in table_columns:
@@ -38,6 +40,7 @@ def create_table(metadata, table_name, columns):
 @handle_db_errors
 @confirm_action("удаление таблицы")
 def drop_table(metadata, table_name):
+    """Удаляет таблицу из метаданных после подтверждения"""
     if table_name not in metadata:
         raise KeyError(table_name)
 
@@ -50,6 +53,7 @@ def drop_table(metadata, table_name):
 @handle_db_errors
 @log_time
 def insert(metadata, table_name, values):
+    """Проверяет значения и добавляет запись с автоматически созданным ID"""
     if table_name not in metadata:
         raise KeyError(table_name)
 
@@ -89,6 +93,7 @@ def insert(metadata, table_name, values):
 @handle_db_errors
 @log_time
 def select(table_data, where_clause=None):
+    """Возвращает все записи или записи, соответствующие условию"""
     if where_clause is None:
         return table_data
 
@@ -104,6 +109,7 @@ def select(table_data, where_clause=None):
 
 @handle_db_errors
 def update(table_data, set_clause, where_clause):
+    """Обновляет поля записей, удовлетворяющих условию"""
     result = []
 
     for row in table_data:
@@ -121,6 +127,7 @@ def update(table_data, set_clause, where_clause):
 @handle_db_errors
 @confirm_action("удаление записей")
 def delete(table_data, where_clause):
+    """Удаляет подходящие записи после подтверждения"""
     result = []
 
     for row in table_data:
