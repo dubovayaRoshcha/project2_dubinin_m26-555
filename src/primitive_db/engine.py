@@ -6,6 +6,7 @@ from prettytable import PrettyTable
 from primitive_db.core import create_table, delete, drop_table, insert, select, update
 from primitive_db.parser import parse_condition, parse_list
 from primitive_db.utils import (
+    create_cacher,
     delete_table_data,
     load_metadata,
     load_table_data,
@@ -47,6 +48,7 @@ def print_help():
 
 def run():
     print_help()
+    cache_result = create_cacher()
 
     while True:
         metadata = load_metadata("db_meta.json")
@@ -101,12 +103,11 @@ def run():
 
             columns = args[2:]
 
-            if table_name not in metadata:
-                metadata = create_table(metadata, table_name, columns)
-                if table_name in metadata:
-                    save_metadata("db_meta.json", metadata)
-            else:
-                create_table(metadata, table_name, columns)
+            result = create_table(metadata, table_name, columns)
+
+            if result is not None:
+                save_metadata("db_meta.json", result)
+                cache_result(None, None)
 
         elif command == "drop_table":
             if len(args) != 2:
@@ -115,12 +116,12 @@ def run():
 
             table_name = args[1]
 
-            if table_name in metadata:
-                metadata = drop_table(metadata, table_name)
-                save_metadata("db_meta.json", metadata)
+            result = drop_table(metadata, table_name)
+
+            if result is not None:
+                save_metadata("db_meta.json", result)
                 delete_table_data(table_name)
-            else:
-                drop_table(metadata, table_name)
+                cache_result(None, None)
 
         elif command == "insert":
             parts = user_input.split(maxsplit=4)
@@ -145,6 +146,7 @@ def run():
 
             if table_data is not None:
                 save_table_data(table_name, table_data)
+                cache_result(None, None)
 
         elif command == "select":
             parts = user_input.split(maxsplit=4)
@@ -190,8 +192,18 @@ def run():
                     print(f"Некорректное значение: {value}. Попробуйте снова.")
                     continue
 
-            table_data = load_table_data(table_name)
-            result = select(table_data, where_clause)
+            key = (
+                table_name,
+                tuple(sorted(where_clause.items())) if where_clause else None,
+            )
+
+            result = cache_result(
+                key,
+                lambda: select(load_table_data(table_name), where_clause),
+            )
+
+            if result is None:
+                continue
 
             table = PrettyTable()
             table.field_names = list(metadata[table_name].keys())
@@ -253,7 +265,11 @@ def run():
             table_data = load_table_data(table_name)
             result = update(table_data, set_clause, where_clause)
 
+            if result is None:
+                continue
+
             save_table_data(table_name, result)
+            cache_result(None, None)
 
             for old_row, new_row in zip(table_data, result):
                 if old_row != new_row:
@@ -297,7 +313,11 @@ def run():
             table_data = load_table_data(table_name)
             result = delete(table_data, where_clause)
 
+            if result is None:
+                continue
+
             save_table_data(table_name, result)
+            cache_result(None, None)
 
             for row in table_data:
                 if row not in result:
