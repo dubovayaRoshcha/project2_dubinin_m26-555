@@ -118,4 +118,4 @@ uv run database
 
 ## Демонстрация работы
 
-[![](https://asciinema.org/a/RTQe8Ncpbl2Wf6nE.svg)](https://asciinema.org/a/RTQe8Ncpbl2Wf6nE)
+[![Демонстрация](https://asciinema.org/a/RTQe8Ncpbl2Wf6nE.png)](https://asciinema.org/a/RTQe8Ncpbl2Wf6nE)
